@@ -65,26 +65,21 @@ if response.status_code == 200:
             with open("index.html", "w", encoding="utf-8") as file:
                 file.write("<html><head>\n")
                 file.write("<meta charset='UTF-8'>\n")
-                file.write("""
-                <script>
-                window.twttr = (function(d, s, id) {
-                  var js, fjs = d.getElementsByTagName(s)[0],
-                    t = window.twttr || {};
-                  if (d.getElementById(id)) return t;
-                  js = d.createElement(s);
-                  js.id = id;
-                  js.src = "https://platform.twitter.com/widgets.js";
-                  fjs.parentNode.insertBefore(js, fjs);
-
-                  t._e = [];
-                  t.ready = function(f) {
-                    t._e.push(f);
-                  };
-
-                  return t;
-                }(document, "script", "twitter-wjs"));
-                </script>
-                """)
+                file.write(
+                    '<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>\n'
+                )
+                file.write(
+                    '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
+                )
+                file.write(
+                    "<style>\n"
+                    "body { font-family: Arial, sans-serif; }\n"
+                    ".tweet-container { margin: 10px auto; max-width: 550px; }\n"
+                    "@media screen and (max-width: 600px) {\n"
+                    "    .tweet-container { width: 100%; padding: 10px; }\n"
+                    "}\n"
+                    "</style>\n"
+                )
                 file.write("</head><body>\n")
                 file.write("<h1>Liked Tweets</h1>\n")
 
@@ -94,7 +89,7 @@ if response.status_code == 200:
 
                     # oEmbed APIから埋め込みHTMLを取得
                     embed_html = get_oembed_html(tweet_url)
-                    file.write(embed_html + "\n")
+                    file.write(f'<div class="tweet-container">{embed_html}</div>\n')
 
                 file.write("</body></html>\n")
         else:
