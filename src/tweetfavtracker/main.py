@@ -1,35 +1,56 @@
-import os
-
 import requests
-from dotenv import load_dotenv
+from flask import (
+    Blueprint,
+    current_app,
+    flash,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
-# .envファイルから環境変数を読み込む
-load_dotenv("../../.env")
+main = Blueprint("main", __name__)
 
-# 環境変数から認証情報を取得
-auth_token = os.getenv("AUTH_TOKEN")
-ct0 = os.getenv("CT0")
-bearer_token = os.getenv("BEARER_TOKEN")
-screen_name = os.getenv("SCREEN_NAME")
 
-# Twitter APIのエンドポイントURL
-favorites_url = "https://api.x.com/1.1/favorites/list.json"
+@main.route("/", methods=["GET", "POST"])
+def index():
+    if request.method == "POST":
+        screen_name = request.form["screen_name"]
+        return redirect(url_for("main.likes", screen_name=screen_name, page=1))
 
-# URLパラメータを設定
-params = {"count": 20, "screen_name": screen_name}
+    return render_template("index.html")
 
-# 認証情報とその他のヘッダーを設定
-headers = {
-    "authorization": f"Bearer {bearer_token}",
-    "content-type": "application/json",
-    "cookie": f"auth_token={auth_token}; ct0={ct0};",
-    "x-csrf-token": ct0,
-    "Host": "api.x.com",
-}
+
+@main.route("/likes/<screen_name>/<int:page>", methods=["GET"])
+def likes(screen_name, page):
+    url = "https://api.x.com/1.1/favorites/list.json"
+    params = {"count": 20, "screen_name": screen_name, "page": page}
+    headers = {
+        "authorization": f"Bearer {current_app.config['BEARER_TOKEN']}",
+        "content-type": "application/json",
+        "cookie": f"auth_token={current_app.config['AUTH_TOKEN']}; ct0={current_app.config['CT0']};",
+        "x-csrf-token": current_app.config["CT0"],
+        "Host": "api.x.com",
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+    if response.status_code == 200:
+        likes_list = response.json()
+
+        # 各ツイートに対して埋め込みHTMLを取得
+        for tweet in likes_list:
+            tweet_url = f"https://twitter.com/{tweet['user']['screen_name']}/status/{tweet['id_str']}"
+            tweet["embed_html"] = get_oembed_html(tweet_url)
+
+        return render_template(
+            "likes.html", likes_list=likes_list, screen_name=screen_name, page=page
+        )
+    else:
+        flash(f"Error: {response.status_code}")
+        return redirect(url_for("main.index"))
 
 
 def get_oembed_html(tweet_url):
-    # oEmbed APIのパラメータを設定
     oembed_params = {
         "url": tweet_url,
         "hide_thread": "true",
@@ -38,64 +59,9 @@ def get_oembed_html(tweet_url):
         "lang": "ja",
     }
     oembed_url = "https://publish.twitter.com/oembed"
-
-    # oEmbed APIを使って埋め込みコードを取得
     oembed_response = requests.get(oembed_url, params=oembed_params)
     if oembed_response.status_code == 200:
         oembed_data = oembed_response.json()
         return oembed_data["html"].strip()
     else:
-        print(
-            f"Error fetching oEmbed data for tweet URL {tweet_url}: {oembed_response.status_code}"
-        )
         return ""
-
-
-# リクエストを送信して、いいねリストのレスポンスを取得
-response = requests.get(favorites_url, headers=headers, params=params)
-
-# レスポンスのステータスコードを確認
-if response.status_code == 200:
-    try:
-        # レスポンスのJSONデータを取得
-        likes_list = response.json()
-
-        if likes_list:
-            # HTMLファイルにツイートの埋め込みコードを保存
-            with open("index.html", "w", encoding="utf-8") as file:
-                file.write("<html><head>\n")
-                file.write("<meta charset='UTF-8'>\n")
-                file.write(
-                    '<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>\n'
-                )
-                file.write(
-                    '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n'
-                )
-                file.write(
-                    "<style>\n"
-                    "body { font-family: Arial, sans-serif; }\n"
-                    ".tweet-container { margin: 10px auto; max-width: 550px; }\n"
-                    "@media screen and (max-width: 600px) {\n"
-                    "    .tweet-container { width: 100%; padding: 10px; }\n"
-                    "}\n"
-                    "</style>\n"
-                )
-                file.write("</head><body>\n")
-                file.write("<h1>Liked Tweets</h1>\n")
-
-                for tweet in likes_list:
-                    tweet_id = tweet["id_str"]
-                    tweet_url = f"https://twitter.com/{tweet['user']['screen_name']}/status/{tweet_id}"
-
-                    # oEmbed APIから埋め込みHTMLを取得
-                    embed_html = get_oembed_html(tweet_url)
-                    file.write(f'<div class="tweet-container">{embed_html}</div>\n')
-
-                file.write("</body></html>\n")
-        else:
-            print("No likes found.")
-    except ValueError:
-        print("Error: Failed to decode JSON response")
-else:
-    print(f"Error: {response.status_code}")
-    print("Response content:", response.text)

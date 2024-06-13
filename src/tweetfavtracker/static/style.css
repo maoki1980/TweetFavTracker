@@ -1,0 +1,26 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+.tweet-container {
+    margin: 10px auto;
+    max-width: 550px;
+}
+
+@media screen and (max-width: 600px) {
+    .tweet-container {
+        width: 100%;
+        padding: 10px;
+    }
+}
+
+.pagination {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.pagination a {
+    margin: 0 10px;
+    text-decoration: none;
+    color: #1DA1F2;
+}
