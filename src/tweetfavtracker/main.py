@@ -24,7 +24,11 @@ def index():
 @main.route("/likes/<screen_name>/<int:page>", methods=["GET"])
 def likes(screen_name, page):
     url = "https://api.x.com/1.1/favorites/list.json"
-    params = {"count": 20, "screen_name": screen_name, "page": page}
+    params = {
+        "count": 10,
+        "screen_name": screen_name,
+        "page": page,
+    }  # 1ページあたりのツイート数を10に変更
     headers = {
         "authorization": f"Bearer {current_app.config['BEARER_TOKEN']}",
         "content-type": "application/json",
