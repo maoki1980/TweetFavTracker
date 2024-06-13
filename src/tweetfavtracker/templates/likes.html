@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>FavTweets</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+</head>
+
+<body>
+    <h1>{{ screen_name }}'s Fav</h1>
+    <div class="tweet-container">
+        {% for tweet in likes_list %}
+        <div class="tweet">
+            {{ tweet.embed_html|safe }}
+        </div>
+        {% endfor %}
+    </div>
+    <div class="pagination">
+        {% if page > 1 %}
+        <a href="{{ url_for('main.likes', screen_name=screen_name, page=page-1) }}">Babk</a>
+        {% endif %}
+        <a href="{{ url_for('main.likes', screen_name=screen_name, page=page+1) }}">Next</a>
+    </div>
+</body>
+
+</html>

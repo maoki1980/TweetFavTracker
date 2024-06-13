@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>TweetFavTracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <h1>TweetFavTracker</h1>
+    <form method="post">
+        <label for="screen_name">Screen Name:</label>
+        <input type="text" id="screen_name" name="screen_name" required>
+        <button type="submit">Tracking</button>
+    </form>
+</body>
+
+</html>
